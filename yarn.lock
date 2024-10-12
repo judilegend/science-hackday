@@ -1441,10 +1441,10 @@
   dependencies:
     cross-spawn "^7.0.3"
 
-"@expo/vector-icons@^14.0.0":
-  version "14.0.2"
-  resolved "https://registry.npmjs.org/@expo/vector-icons/-/vector-icons-14.0.2.tgz"
-  integrity sha512-70LpmXQu4xa8cMxjp1fydgRPsalefnHaXLzIwaHMEzcZhnyjw2acZz8azRrZOslPVAWlxItOa2Dd7WtD/kI+CA==
+"@expo/vector-icons@^14.0.0", "@expo/vector-icons@^14.0.4":
+  version "14.0.4"
+  resolved "https://registry.npmjs.org/@expo/vector-icons/-/vector-icons-14.0.4.tgz"
+  integrity sha512-+yKshcbpDfbV4zoXOgHxCwh7lkE9VVTT5T03OUlBsqfze1PLy6Hi4jp1vSb1GVbY6eskvMIivGVc9SKzIv0oEQ==
   dependencies:
     prop-types "^15.8.1"
 
@@ -3617,7 +3617,7 @@ expo-file-system@~17.0.1:
   resolved "https://registry.npmjs.org/expo-file-system/-/expo-file-system-17.0.1.tgz"
   integrity sha512-dYpnZJqTGj6HCYJyXAgpFkQWsiCH3HY1ek2cFZVHFoEc5tLz9gmdEgTF6nFHurvmvfmXqxi7a5CXyVm0aFYJBw==
 
-expo-font@~12.0.10:
+expo-font@^12.0.10, expo-font@~12.0.10:
   version "12.0.10"
   resolved "https://registry.npmjs.org/expo-font/-/expo-font-12.0.10.tgz"
   integrity sha512-Q1i2NuYri3jy32zdnBaHHCya1wH1yMAsI+3CCmj9zlQzlhsS9Bdwcj2W3c5eU5FvH2hsNQy4O+O1NnM6o/pDaQ==
@@ -3667,6 +3667,13 @@ expo-notifications@^0.28.18:
     expo-application "~5.9.0"
     expo-constants "~16.0.0"
     fs-extra "^9.1.0"
+
+expo-splash-screen@^0.27.6:
+  version "0.27.6"
+  resolved "https://registry.npmjs.org/expo-splash-screen/-/expo-splash-screen-0.27.6.tgz"
+  integrity sha512-joUwZQS48k3VMnucQ0Y8Dle1t1FyIvluQA4kjuPx2x7l2dRrfctbo34ahTnC0p1o2go5oN2iEnSTOElY4wRQHw==
+  dependencies:
+    "@expo/prebuild-config" "7.0.8"
 
 expo-sqlite@~13.3.0:
   version "13.3.0"
@@ -5396,6 +5403,7 @@ ms@2.0.0:
   version "1.0.0"
   resolved "file:"
   dependencies:
+    "@expo/vector-icons" "^14.0.4"
     "@react-native-async-storage/async-storage" "^1.23.1"
     "@react-native-community/datetimepicker" "^8.2.0"
     "@react-native-picker/picker" "^2.8.0"
@@ -5404,9 +5412,13 @@ ms@2.0.0:
     axios "^1.7.7"
     expo "~51.0.28"
     expo-device "^6.0.2"
+    expo-font "^12.0.10"
     expo-location "^17.0.1"
     expo-notifications "^0.28.18"
+    expo-splash-screen "^0.27.6"
     expo-sqlite "~13.3.0"
+    geolib "^3.3.4"
+    js-priority-queue "^0.1.5"
     my-app "file:"
     react "18.2.0"
     react-native "0.74.5"

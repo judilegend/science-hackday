@@ -2,7 +2,6 @@ import React, { useState, useContext } from "react";
 import {
   View,
   TextInput,
-  Button,
   StyleSheet,
   Alert,
   TouchableOpacity,
@@ -26,25 +25,23 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Connexion</Text>
       <TextInput
         style={styles.input}
-        placeholder="Username"
+        placeholder="Nom d'utilisateur"
         value={username}
         onChangeText={setUsername}
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Mot de passe"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title="Login" onPress={handleLogin} />
-      {/* <Button
-        title="Register"
-        onPress={() => navigation.navigate("Register")}
-      /> */}
-
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>Se connecter</Text>
+      </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("Register")}>
         <Text style={styles.linkText}>Pas de compte ? S'inscrire</Text>
       </TouchableOpacity>
@@ -87,4 +84,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
 export default LoginScreen;

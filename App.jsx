@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { IssueProvider } from "./context/IssueContext";
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
@@ -16,6 +17,7 @@ import EmergencyScreen from "./screens/MyHome";
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
+import CommunicationScreen from "./screens/CommunicationScreen";
 
 const Stack = createStackNavigator();
 
@@ -85,12 +87,17 @@ export default function App() {
               options={{ title: "Report an Issue" }}
             />
             <Stack.Screen
+              name="Communication"
+              component={CommunicationScreen}
+            />
+            <Stack.Screen
               name="IssueMap"
               component={IssueMapScreen}
               options={{ title: "Issue Map" }}
             />
           </Stack.Navigator>
         </NavigationContainer>
+        {/* </NotificationProvider> */}
       </IssueProvider>
     </AuthProvider>
   );

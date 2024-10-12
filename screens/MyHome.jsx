@@ -61,7 +61,24 @@ export default function MyHome({ navigation }) {
   }, []);
 
   const handleEmergencyPress = () => {
-    navigation.navigate("IssueMap");
+    Alert.alert(
+      "Signaler une urgence",
+      "Êtes-vous sûr de vouloir signaler une urgence médicale ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Confirmer",
+          onPress: async () => {
+            const location = await getCurrentLocation();
+            navigation.navigate("IssueMap", {
+              initialLocation: location,
+              confirmEmergency: true,
+            });
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   const handleEmergencySMS = async () => {

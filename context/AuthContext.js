@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginUser, registerUser } from "../services/database";
+import { authenticateUser, registerUser } from "../services/api";
 
 export const AuthContext = createContext();
 
@@ -24,9 +24,19 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const loggedInUser = await loginUser(username, password);
+      const loggedInUser = await authenticateUser(username, password);
       setUser(loggedInUser);
       await AsyncStorage.setItem("user", JSON.stringify(loggedInUser));
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      const registeredUser = await registerUser(userData);
+      setUser(registeredUser);
+      await AsyncStorage.setItem("user", JSON.stringify(registeredUser));
     } catch (error) {
       throw error;
     }
@@ -38,7 +48,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

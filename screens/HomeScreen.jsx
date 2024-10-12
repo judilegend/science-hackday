@@ -1,13 +1,13 @@
 import React, { useContext } from "react";
 import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
   SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { AuthContext } from "../context/AuthContext";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { AuthContext } from "../context/AuthContext";
 
 const HomeScreen = ({ navigation }) => {
   const { user, logout } = useContext(AuthContext);
@@ -35,16 +35,7 @@ const HomeScreen = ({ navigation }) => {
           <Icon name="map" size={24} color="#007AFF" />
           <Text style={styles.barButtonText}>Carte</Text>
         </TouchableOpacity>
-{/* 
-        <TouchableOpacity
-          style={styles.barButton}
-          onPress={() => navigation.navigate("Profile")}
-        >
-          <Icon name="person" size={24} color="#007AFF" />
-          <Text style={styles.barButtonText}>Profil</Text>
-        </TouchableOpacity> */}
-
-        <TouchableOpacity style={styles.barButton} onPress={logout}>
+        <TouchableOpacity style={styles.barButton} onPress={()=>navigation.navigate("Login")}>
           <Icon name="exit-to-app" size={24} color="#007AFF" />
           <Text style={styles.barButtonText}>Déconnexion</Text>
         </TouchableOpacity>
@@ -57,6 +48,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
+    fontFamily: "Poppins_Regular",
   },
   content: {
     flex: 1,

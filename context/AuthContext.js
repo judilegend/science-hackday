@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authenticateUser, registerUser } from "../services/api";
+import axios from "axios";
 
 export const AuthContext = createContext();
 
@@ -24,9 +25,21 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const loggedInUser = await authenticateUser(username, password);
-      setUser(loggedInUser);
-      await AsyncStorage.setItem("user", JSON.stringify(loggedInUser));
+      const res = await axios.post(
+        "http://192.168.131.193:8080/api/user/authenticate",
+        { username, password }, // Automatically converted to JSON
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (res.data.success) {
+        setUser(res.data.user);
+        await AsyncStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+      return res.data
     } catch (error) {
       throw error;
     }
@@ -34,16 +47,27 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const registeredUser = await registerUser(userData);
-      setUser(registeredUser);
-      await AsyncStorage.setItem("user", JSON.stringify(registeredUser));
+      const res = await axios.post(
+        "http://192.168.131.193:8080/api/user/create",
+        userData, // Automatically converted to JSON
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (res.data.success) {
+        setUser(res.data.data);
+        await AsyncStorage.setItem("user", JSON.stringify(res.data.data));
+      }
+      return res.data
     } catch (error) {
       throw error;
     }
   };
 
   const logout = async () => {
-    setUser(null);
     await AsyncStorage.removeItem("user");
   };
 

@@ -13,11 +13,18 @@ const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useContext(AuthContext);
+  const [error, setError] = useState("");
 
   const handleLogin = async () => {
     try {
-      await login(username, password);
-      navigation.replace("Home");
+      console.log(JSON.stringify({ username, password }));
+      const res = await login(username, password);
+      if (res.success) {
+        navigation.replace("Emergency");
+      }
+      else {
+        setError(res.message);
+      }
     } catch (error) {
       Alert.alert("Login Failed", error.message);
     }
@@ -39,6 +46,7 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setPassword}
         secureTextEntry
       />
+      <Text style={styles.helperText}>{error}</Text>
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Se connecter</Text>
       </TouchableOpacity>
@@ -65,7 +73,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
     padding: 10,
-    marginBottom: 20,
+    marginTop: 20,
     borderRadius: 5,
   },
   button: {
@@ -82,6 +90,12 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     textAlign: "center",
     marginTop: 20,
+  },
+  helperText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 10,
+    marginBottom: 20,
   },
 });
 

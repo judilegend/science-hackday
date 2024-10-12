@@ -6,10 +6,6 @@ import AuthNavigator from "./AuthNavigator";
 import HomeScreen from "../screens/HomeScreen";
 import ReportScreen from "../screens/ReportScreen";
 import MapScreen from "../screens/MapScreen";
-import NotificationsScreen from "../screens/NotificationsScreen";
-import ConsumptionScreen from "../screens/ConsumptionScreen";
-import ProfileScreen from "../screens/ProfileScreen";
-
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -18,9 +14,6 @@ const MainTabNavigator = () => (
     <Tab.Screen name="Home" component={HomeScreen} />
     <Tab.Screen name="Report" component={ReportScreen} />
     <Tab.Screen name="Map" component={MapScreen} />
-    <Tab.Screen name="Notifications" component={NotificationsScreen} />
-    <Tab.Screen name="Consumption" component={ConsumptionScreen} />
-    <Tab.Screen name="Profile" component={ProfileScreen} />
   </Tab.Navigator>
 );
 

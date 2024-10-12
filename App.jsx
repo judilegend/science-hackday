@@ -112,15 +112,6 @@ export default function App() {
                 component={IssueMapScreen}
                 options={{ title: "Issue Map" }}
               />
-              <Stack.Screen
-                name="JiramaIntervention"
-                component={JiramaInterventionScreen}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="CreateOutageAlert"
-                component={CreateOutageAlertScreen}
-              />
             </Stack.Navigator>
           </NavigationContainer>
         </IssueProvider>

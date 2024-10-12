@@ -33,9 +33,9 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("IssueMap")}
         >
           <Icon name="map" size={24} color="#007AFF" />
-   <Text style={styles.barButtonText}>Carte</Text>
+          <Text style={styles.barButtonText}>Carte</Text>
         </TouchableOpacity>
-{/* 
+        {/* 
         <TouchableOpacity
           style={styles.barButton}
           onPress={() => navigation.navigate("Profile")}

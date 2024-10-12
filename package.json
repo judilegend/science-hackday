@@ -19,6 +19,7 @@
     "expo-location": "^17.0.1",
     "expo-notifications": "^0.28.18",
     "expo-sqlite": "~13.3.0",
+    "my-app": "file:",
     "react": "18.2.0",
     "react-native": "0.74.5",
     "react-native-chart-kit": "^6.12.0",

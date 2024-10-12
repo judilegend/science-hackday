@@ -7,8 +7,8 @@ const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={notifications}
-        renderItem={renderNotification}
+        // data={notifications}
+        // renderItem={renderNotification}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={
           <>
@@ -20,16 +20,7 @@ const HomeScreen = ({ navigation }) => {
               title="View Issue Map"
               onPress={() => navigation.navigate("IssueMap")}
             />
-            <Button
-              title="View Consumption"
-              onPress={() => navigation.navigate("Consumption")}
-            />
-            {/* {user && user.role === "jirama" && ( */}
-            <Button
-              title="JIRAMA Intervention Dashboard"
-              onPress={() => navigation.navigate("JiramaIntervention")}
-            />
-            {/* )} */}
+       
             <Button title="Logout" onPress={logout} />
           </>
         }

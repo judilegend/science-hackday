@@ -2,45 +2,60 @@ import React, { useState, useContext } from "react";
 import {
   View,
   TextInput,
-  Button,
   StyleSheet,
   Alert,
   Text,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { AuthContext } from "../context/AuthContext";
 
 const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [mail, setMail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const { register } = useContext(AuthContext);
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      Alert.alert("Error", "Les mots de passe ne correspondent pas");
       return;
     }
     try {
-      await register(username, email, password);
-      Alert.alert("Success", "Registration successful", [
+      const userData = {
+        username,
+        password,
+        mail,
+        firstName,
+        lastName,
+        phoneNumber,
+        address,
+        city,
+        role: "USER", // You might want to set this dynamically or have a default value
+      };
+      await register(userData);
+      Alert.alert("Succès", "Inscription réussie", [
         { text: "OK", onPress: () => navigation.navigate("Home") },
       ]);
     } catch (error) {
-      Alert.alert("Registration Failed", error.message);
+      Alert.alert("Échec de l'inscription", error.message);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Inscription</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
+        placeholder="Nom d'utilisateur"
+        value={username}
+        onChangeText={setUsername}
         autoCapitalize="none"
       />
       <TextInput
@@ -57,16 +72,54 @@ const RegisterScreen = ({ navigation }) => {
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={mail}
+        onChangeText={setMail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Prénom"
+        value={firstName}
+        onChangeText={setFirstName}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Nom"
+        value={lastName}
+        onChangeText={setLastName}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Numéro de téléphone"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+        keyboardType="phone-pad"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Adresse"
+        value={address}
+        onChangeText={setAddress}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Ville"
+        value={city}
+        onChangeText={setCity}
+      />
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>S'inscrire</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("Login")}>
         <Text style={styles.linkText}>Déjà un compte ? Se connecter</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

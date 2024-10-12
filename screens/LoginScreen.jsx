@@ -13,12 +13,27 @@ import { AuthContext } from "../context/AuthContext";
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [responseMessage, setResponseMessage] = useState(""); // Corrected state name
   const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
     try {
-      await login(username, password);
-      navigation.replace("Home");
+      const response = await fetch("http://192.168.131.193:8080/api/user/auth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }), // Ensure JSON body is stringified
+      });
+
+      const data = await response.json(); // Await JSON parsing
+
+      if (!data.success) {
+        setResponseMessage(data.message); // Set error message in state
+      } else {
+        await login(data.token); // Handle successful login if required
+        navigation.replace("Home");
+      }
     } catch (error) {
       Alert.alert("Login Failed", error.message);
     }
@@ -26,6 +41,9 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {responseMessage ? ( // Conditionally render the message
+        <Text style={styles.errorMessage}>{responseMessage}</Text>
+      ) : null}
       <TextInput
         style={styles.input}
         placeholder="Username"
@@ -40,11 +58,6 @@ const LoginScreen = ({ navigation }) => {
         secureTextEntry
       />
       <Button title="Login" onPress={handleLogin} />
-      {/* <Button
-        title="Register"
-        onPress={() => navigation.navigate("Register")}
-      /> */}
-
       <TouchableOpacity onPress={() => navigation.navigate("Register")}>
         <Text style={styles.linkText}>Pas de compte ? S'inscrire</Text>
       </TouchableOpacity>
@@ -58,10 +71,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+  errorMessage: {
+    color: "red",
+    fontSize: 14,
+    marginBottom: 10,
     textAlign: "center",
   },
   input: {
@@ -71,20 +84,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 5,
   },
-  button: {
-    backgroundColor: "#007AFF",
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-  },
   linkText: {
     color: "#007AFF",
     textAlign: "center",
     marginTop: 20,
   },
 });
+
 export default LoginScreen;

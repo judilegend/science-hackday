@@ -20,7 +20,7 @@ const HomeScreen = ({ navigation }) => {
               title="View Issue Map"
               onPress={() => navigation.navigate("IssueMap")}
             />
-       
+
             <Button title="Logout" onPress={logout} />
           </>
         }

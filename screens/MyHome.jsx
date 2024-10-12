@@ -1,7 +1,11 @@
 // screens/EmergencyScreen.js
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Animated, Platform, TouchableNativeFeedback } from 'react-native';
-import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import axios from 'axios';
+import React, { useContext, useEffect, useState } from 'react';
+import { Alert, Animated, Platform, SafeAreaView, StyleSheet, Text, TouchableNativeFeedback, TouchableOpacity, View } from 'react-native';
+import { AuthContext } from '../context/AuthContext';
+import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RippleButton = ({ onPress, style, children }) => {
     const [scale] = useState(new Animated.Value(1));
@@ -52,9 +56,55 @@ const RippleButton = ({ onPress, style, children }) => {
 };
 
 export default function EmergencyScreen({ navigation }) {
-    const handleEmergencyPress = () => {
+    const { user, logout, token } = useContext(AuthContext);
+    const [location, setLocation] = useState(null);
+
+    useEffect(()=>{
+        getCurrentLocation();
+    },[])
+
+    const getCurrentLocation = async () => {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+            console.error('Permission to access location was denied');
+            return;
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        console.log('Current location:', location);
+        setLocation({ latitude: location.latitude, longitude: location.longitude });
+        return location;
+    };
+
+    const handleEmergencyPress = async () => {
         console.log('Emergency button pressed');
-        // Add your emergency action here
+        try {
+            const formData = new FormData();
+
+            formData.append("signal",JSON.stringify({
+                "typeId": 1,
+                "latitude": location.latitude,
+                "longitude": location.longitude,
+                "description": "Ceci est une urgence maximale",
+                "state" : "PENDING",
+                "userId": user.id
+            }));
+
+            formData.append("assets", []);
+
+            console.log(token);
+            
+
+            const res = await axios.post("http://192.168.131.193:8080/api/signal", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': 'Bearer ' + token,
+                },
+            });
+            console.log(res.data);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const handleNotificationPress = () => {
@@ -76,7 +126,7 @@ export default function EmergencyScreen({ navigation }) {
             <View style={styles.emergencyCard}>
                 <View style={styles.locationHeader}>
                     <MaterialIcons name="location-on" size={24} color="#f23846" />
-                    <Text style={styles.locationText}>raly</Text>
+                    <Text style={styles.locationText}>{user.username}</Text>
                     <TouchableOpacity>
                         <MaterialIcons name="info" size={24} color="#f23846" />
                     </TouchableOpacity>

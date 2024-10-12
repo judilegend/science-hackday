@@ -54,125 +54,117 @@ const RippleButton = ({ onPress, style, children }) => {
         </TouchableOpacity>
     );
 };
-export default function MyHome({ navigation }) {
-  const [isOffline, setIsOffline] = useState(false);
-  const { logout } = useAuth();
 
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsOffline(!state.isConnected);
-    });
+export default function EmergencyScreen({ navigation }) {
+    const { user, logout, token } = useContext(AuthContext);
+    const [location, setLocation] = useState(null);
 
-    return () => unsubscribe();
-  }, []);
+    useEffect(()=>{
+        getCurrentLocation();
+    },[])
 
-  const handleEmergencyPress = () => {
-    Alert.alert(
-      "Signaler une urgence",
-      "Êtes-vous sûr de vouloir signaler une urgence médicale ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Confirmer",
-          onPress: async () => {
-            const location = await getCurrentLocation();
-            navigation.navigate("IssueMap", {
-              initialLocation: location,
-              confirmEmergency: true,
+    const getCurrentLocation = async () => {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+            console.error('Permission to access location was denied');
+            return;
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        console.log('Current location:', location);
+        setLocation({ latitude: location.latitude, longitude: location.longitude });
+        return location;
+    };
+
+    const handleEmergencyPress = async () => {
+        console.log('Emergency button pressed');
+        try {
+            const formData = new FormData();
+
+            formData.append("signal",JSON.stringify({
+                "typeId": 1,
+                "latitude": location.latitude,
+                "longitude": location.longitude,
+                "description": "Ceci est une urgence maximale",
+                "state" : "PENDING",
+                "userId": user.id
+            }));
+
+            formData.append("assets", []);
+
+            console.log(token);
+            
+
+            const res = await axios.post("http://192.168.131.193:8080/api/signal", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': 'Bearer ' + token,
+                },
             });
-          },
-        },
-      ],
-      { cancelable: false }
-    );
-  };
+            console.log(res.data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
-  const handleEmergencySMS = async () => {
-    const emergencyNumber = "0388282657";
-    const message = "Emergency: Need immediate assistance";
+    const handleNotificationPress = () => {
+        console.log('Notification button pressed');
+        // Add your notification action here
+    };
 
-    const url = Platform.select({
-      ios: `sms:${emergencyNumber}&body=${encodeURIComponent(message)}`,
-      android: `sms:${emergencyNumber}?body=${encodeURIComponent(message)}`,
-    });
+    const handleHomePress = () => {
+        console.log('Home button pressed');
+        // Add your home action here
+    };
 
-    try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert("Error", "Unable to open SMS app");
-      }
-    } catch (error) {
-      console.error("Error opening SMS app:", error);
-      Alert.alert("Error", "Failed to send SMS");
-    }
-  };
+    const handleProfilePress = () => {
+        navigation.navigate('IssueMap');
+    };
 
-  const handleLogout = () => {
-    logout();
-    navigation.navigate("Login");
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={["#4c669f", "#3b5998", "#192f6a"]}
-        style={styles.gradient}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Salama Alert</Text>
-            <TouchableOpacity
-              onPress={handleLogout}
-              style={styles.logoutButton}
-            >
-              <MaterialIcons name="logout" size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.emergencyCard}>
-            <Text style={styles.emergencyTitle}>Emergency Services</Text>
-            <RippleButton
-              onPress={handleEmergencyPress}
-              style={styles.alarmButton}
-            >
-              <MaterialIcons name="alarm" size={48} color="white" />
-            </RippleButton>
-            <Text style={styles.emergencyText}>Tap in case of emergency</Text>
-          </View>
-
-          <View style={styles.servicesContainer}>
-            <TouchableOpacity style={styles.serviceButton}>
-              <FontAwesome5 name="briefcase-medical" size={24} color="#fff" />
-              <Text style={styles.serviceText}>Medical</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.serviceButton}>
-              <FontAwesome5 name="fire" size={24} color="#fff" />
-              <Text style={styles.serviceText}>Fire Force</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.serviceButton}>
-              <FontAwesome5 name="ambulance" size={24} color="#fff" />
-              <Text style={styles.serviceText}>Ambulance</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.serviceButton}>
-              <FontAwesome5 name="shield-alt" size={24} color="#fff" />
-              <Text style={styles.serviceText}>Police</Text>
-            </TouchableOpacity>
-          </View>
-
-          <RippleButton
-            onPress={handleEmergencySMS}
-            style={styles.emergencySMSButton}
-          >
-            <MaterialIcons name="sms" size={24} color="white" />
-            <Text style={styles.emergencySMSText}>Emergency SMS</Text>
-          </RippleButton>
-
-          {isOffline && (
-            <View style={styles.offlineBar}>
-              <Text style={styles.offlineText}>You are offline</Text>
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={styles.emergencyCard}>
+                <View style={styles.locationHeader}>
+                    <MaterialIcons name="location-on" size={24} color="#f23846" />
+                    <Text style={styles.locationText}>{user.username}</Text>
+                    <TouchableOpacity>
+                        <MaterialIcons name="info" size={24} color="#f23846" />
+                    </TouchableOpacity>
+                </View>
+                <RippleButton onPress={handleEmergencyPress} style={styles.alarmButton}>
+                    <MaterialIcons name="alarm" size={48} color="white" />
+                </RippleButton>
+                <Text style={styles.emergencyText}>Tap in case of emergency</Text>
+                <Text style={styles.drillText}>Emergency Drill</Text>
+                <View style={styles.servicesContainer}>
+                    <TouchableOpacity style={styles.serviceButton}>
+                        <FontAwesome5 name="briefcase-medical" size={24} color="#f23846" />
+                        <Text style={styles.serviceText}>Medical</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.serviceButton}>
+                        <FontAwesome5 name="fire" size={24} color="#f23846" />
+                        <Text style={styles.serviceText}>Fire Force</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.serviceButton}>
+                        <FontAwesome5 name="ambulance" size={24} color="#f23846" />
+                        <Text style={styles.serviceText}>Medical</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.serviceButton}>
+                        <FontAwesome5 name="shield-alt" size={24} color="#f23846" />
+                        <Text style={styles.serviceText}>Cops</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+            <View style={styles.bottomIconsContainer}>
+                <TouchableOpacity onPress={handleNotificationPress}>
+                    <MaterialIcons name="notifications" size={24} color="#f23846" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleHomePress}>
+                    <MaterialIcons name="home" size={24} color="#f23846" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleProfilePress}>
+                    <MaterialIcons name="map" size={24} color="#f23846" />
+                </TouchableOpacity>
             </View>
         </SafeAreaView>
     );

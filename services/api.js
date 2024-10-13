@@ -42,13 +42,18 @@ export const reportEmergency = async (latitude, longitude) => {
     );
   }
 };
-export const reportIssue = async (title, description, latitude, longitude) => {
+
+export const reportIssue = async (signalData, assets, token) => {
+  const formData = new FormData();
+  formData.append("signal", JSON.stringify(signalData));
+  formData.append("assets", assets);
+
   try {
-    const response = await api.post("/issues/report", {
-      title,
-      description,
-      latitude,
-      longitude,
+    const response = await axios.post(`${API_BASE_URL}/signal`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: "Bearer " + token,
+      },
     });
     return response.data;
   } catch (error) {

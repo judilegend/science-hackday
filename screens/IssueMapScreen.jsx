@@ -17,6 +17,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import { getDistance } from "geolib";
 import * as ImagePicker from "expo-image-picker";
 import { reportIssue } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const MOCK_ISSUES = [
   {
@@ -55,6 +56,7 @@ const IssueMapScreen = ({ navigation }) => {
   const mapRef = useRef(null);
   const [nearestHospital, setNearestHospital] = useState(null);
   const [route, setRoute] = useState(null);
+  const { user, token } = useAuth();
 
   useEffect(() => {
     getUserLocation();
@@ -267,6 +269,7 @@ const IssueMapScreen = ({ navigation }) => {
   const toggleEmergencyMode = () => {
     setIsEmergencyMode(!isEmergencyMode);
   };
+
   const submitIssueReport = async () => {
     if (!issueTitle.trim() || !issueDescription.trim()) {
       Alert.alert("Champs incomplets", "Veuillez remplir tous les champs.");
@@ -274,22 +277,22 @@ const IssueMapScreen = ({ navigation }) => {
     }
 
     try {
+      const signalData = {
+        typeId: 1, // Adjust this based on your issue types
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        description: issueDescription,
+        state: "PENDING",
+        userId: user.id, // Make sure you have access to the user object
+      };
+      let assetsPath = [];
       const formData = new FormData();
-      formData.append("title", issueTitle);
-      formData.append("description", issueDescription);
-      formData.append("latitude", userLocation.latitude.toString());
-      formData.append("longitude", userLocation.longitude.toString());
+      formData.append("signal", JSON.stringify(signalData));
+      assetsPath = [...photos];
+      // console.log(assetsPath);
 
-      photos.forEach((photo, index) => {
-        formData.append("photos", {
-          uri: photo,
-          type: "image/jpeg",
-          name: `photo_${index}.jpg`,
-        });
-      });
-
-      const response = await reportIssue(formData);
-
+      const response = await reportIssue(signalData, assetsPath , token); // Make sure you have access to the token
+      console.log("Signal data sent:", response);
       setIsReportModalVisible(false);
       setIssueTitle("");
       setIssueDescription("");
@@ -316,6 +319,7 @@ const IssueMapScreen = ({ navigation }) => {
       );
     }
   };
+
   return (
     <View style={styles.container}>
       <MapView

@@ -1,59 +1,52 @@
-// screens/EmergencyScreen.js
-import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import axios from 'axios';
-import React, { useContext, useEffect, useState } from 'react';
-import { Alert, Animated, Platform, SafeAreaView, StyleSheet, Text, TouchableNativeFeedback, TouchableOpacity, View } from 'react-native';
-import { AuthContext } from '../context/AuthContext';
-import * as Location from 'expo-location';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  ScrollView,
+  Animated,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { useAuth } from '../hooks/useAuth';
+import NetInfo from '@react-native-community/netinfo';
 
 const RippleButton = ({ onPress, style, children }) => {
-    const [scale] = useState(new Animated.Value(1));
+  const [scale] = useState(new Animated.Value(1));
 
-    const animateScale = () => {
-        Animated.sequence([
-            Animated.timing(scale, {
-                toValue: 1.1,
-                duration: 200,
-                useNativeDriver: true,
-            }),
-            Animated.timing(scale, {
-                toValue: 1,
-                duration: 200,
-                useNativeDriver: true,
-            }),
-        ]).start();
-    };
+  const animateScale = () => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 1.1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
-    if (Platform.OS === 'android') {
-        return (
-            <TouchableNativeFeedback
-                onPress={() => {
-                    onPress();
-                    animateScale();
-                }}
-                background={TouchableNativeFeedback.Ripple('#7E57C2', true)}
-            >
-                <Animated.View style={[style, { transform: [{ scale }] }]}>
-                    {children}
-                </Animated.View>
-            </TouchableNativeFeedback>
-        );
-    }
-
-    return (
-        <TouchableOpacity
-            onPress={() => {
-                onPress();
-                animateScale();
-            }}
-        >
-            <Animated.View style={[style, { transform: [{ scale }] }]}>
-                {children}
-            </Animated.View>
-        </TouchableOpacity>
-    );
+  return (
+    <TouchableOpacity
+      onPress={() => {
+        onPress();
+        animateScale();
+      }}
+      activeOpacity={0.8}
+    >
+      <Animated.View style={[style, { transform: [{ scale }] }]}>
+        {children}
+      </Animated.View>
+    </TouchableOpacity>
+  );
 };
+
 export default function MyHome({ navigation }) {
   const [isOffline, setIsOffline] = useState(false);
   const { logout } = useAuth();
@@ -70,28 +63,6 @@ export default function MyHome({ navigation }) {
     navigation.navigate("IssueMap");
   };
 
-  const handleEmergencySMS = async () => {
-    const emergencyNumber = "0388282657";
-    const message = "Emergency: Need immediate assistance";
-
-    const url = Platform.select({
-      ios: `sms:${emergencyNumber}&body=${encodeURIComponent(message)}`,
-      android: `sms:${emergencyNumber}?body=${encodeURIComponent(message)}`,
-    });
-
-    try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert("Error", "Unable to open SMS app");
-      }
-    } catch (error) {
-      console.error("Error opening SMS app:", error);
-      Alert.alert("Error", "Failed to send SMS");
-    }
-  };
-
   const handleLogout = () => {
     logout();
     navigation.navigate("Login");
@@ -101,145 +72,170 @@ export default function MyHome({ navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <LinearGradient
-        colors={["#4c669f", "#3b5998", "#192f6a"]}
+        colors={['#4c669f', '#3b5998', '#192f6a']}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <Text style={styles.headerText}>Salama Alert</Text>
-            <TouchableOpacity
-              onPress={handleLogout}
-              style={styles.logoutButton}
-            >
+            <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
               <MaterialIcons name="logout" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
 
           <View style={styles.emergencyCard}>
-            <Text style={styles.emergencyTitle}>Emergency Services</Text>
-            <RippleButton
-              onPress={handleEmergencyPress}
-              style={styles.alarmButton}
-            >
-              <RippleButton
-                onPress={handleEmergencyPress}
-                style={styles.alarmButton}
-              >
-                <FontAwesome5
-                  name="exclamation-triangle"
-                  size={50}
-                  color="#fff"
-                />
-              </RippleButton>
+            <Text style={styles.emergencyTitle}>Services d'urgence</Text>
+            <RippleButton onPress={handleEmergencyPress} style={styles.alarmButton}>
+              <FontAwesome5 name="exclamation-triangle" size={50} color="#fff" />
             </RippleButton>
-            <Text style={styles.emergencyText}>Tap in case of emergency</Text>
+            <Text style={styles.emergencyText}>Appuyez en cas d'urgence</Text>
           </View>
 
           <View style={styles.servicesContainer}>
-            <TouchableOpacity style={styles.serviceButton}>
-              <FontAwesome5 name="briefcase-medical" size={24} color="#fff" />
-              <Text style={styles.serviceText}>Medical</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.serviceButton}>
-              <FontAwesome5 name="fire" size={24} color="#fff" />
-              <Text style={styles.serviceText}>Fire Force</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.serviceButton}>
-              <FontAwesome5 name="ambulance" size={24} color="#fff" />
-              <Text style={styles.serviceText}>Ambulance</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.serviceButton}>
-              <FontAwesome5 name="shield-alt" size={24} color="#fff" />
-              <Text style={styles.serviceText}>Police</Text>
-            </TouchableOpacity>
+            {[
+              { icon: 'briefcase-medical', text: 'Médical' },
+              { icon: 'fire', text: 'Pompiers' },
+              { icon: 'ambulance', text: 'Ambulance' },
+              { icon: 'shield-alt', text: 'Police' },
+            ].map((service, index) => (
+              <TouchableOpacity key={index} style={styles.serviceButton}>
+                <FontAwesome5 name={service.icon} size={24} color="#3b5998" />
+                <Text style={styles.serviceText}>{service.text}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          <RippleButton
-            onPress={handleEmergencySMS}
-            style={styles.emergencySMSButton}
-          >
+          <RippleButton onPress={handleEmergencyPress} style={styles.emergencySMSButton}>
             <MaterialIcons name="sms" size={24} color="white" />
-            <Text style={styles.emergencySMSText}>Emergency SMS</Text>
+            <Text style={styles.emergencySMSText}>SMS d'urgence</Text>
           </RippleButton>
 
           {isOffline && (
             <View style={styles.offlineBar}>
-              <Text style={styles.offlineText}>You are offline</Text>
+              <Text style={styles.offlineText}>Vous êtes hors ligne</Text>
             </View>
-        </SafeAreaView>
-    );
+          )}
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'space-between', // Ensures space is distributed
-    },
-    emergencyCard: {
-        backgroundColor: 'white',
-        padding: 20,
-        margin: 0,
-        alignItems: 'center',
-        flex: 1,
-    },
-    locationHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '100%',
-        marginBottom: 20,
-    },
-    locationText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    alarmButton: {
-        backgroundColor: '#f23846',
-        borderRadius: 50,
-        width: 100,
-        height: 100,
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: 50,
-        overflow: 'hidden', // This is important for the Android ripple effect
-    },
-    emergencyText: {
-        fontSize: 16,
-        color: '#888',
-        marginBottom: 5,
-    },
-    drillText: {
-        fontSize: 14,
-        color: '#f23846',
-        marginBottom: 20,
-    },
-    servicesContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        width: '100%',
-    },
-    serviceButton: {
-        alignItems: 'center',
-        width: '48%',
-        backgroundColor: '#FFF0F0',
-        borderRadius: 10,
-        padding: 10,
-        marginBottom: 10,
-    },
-    serviceText: {
-        marginTop: 5,
-        color: '#f23846',
-    },
-    bottomIconsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around', // Space out the icons evenly
-        paddingVertical: 10, // Add some padding to the bottom
-    },
-    profileIcon: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: '#f23846',
-    },
+  container: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  headerText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  logoutButton: {
+    padding: 10,
+  },
+  emergencyCard: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  emergencyTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#3b5998',
+    marginBottom: 20,
+  },
+  alarmButton: {
+    backgroundColor: '#f23846',
+    borderRadius: 50,
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  emergencyText: {
+    fontSize: 16,
+    color: '#3b5998',
+  },
+  servicesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+  },
+  serviceButton: {
+    width: '48%',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 10,
+    padding: 15,
+    alignItems: 'center',
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  serviceText: {
+    color: '#3b5998',
+    marginTop: 10,
+    fontWeight: '600',
+  },
+  emergencySMSButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 10,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  emergencySMSText: {
+    color: 'white',
+    marginLeft: 10,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  offlineBar: {
+    backgroundColor: '#ff9800',
+    padding: 10,
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  offlineText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });

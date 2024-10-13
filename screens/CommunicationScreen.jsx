@@ -13,7 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { sendSMS } from "react-native-sms";
 // import { NotificationContext } from "../context/NotificationContext";
 
-const BACKEND_URL = "192.168.131.193:8080";
+const BACKEND_URL = "192.168.1.102131.193:8080";
 const CommunicationScreen = () => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
@@ -21,7 +21,7 @@ const CommunicationScreen = () => {
   // const { notifications, addNotification, clearNotifications } =
   //   useNotifications();
   // const { notifications, clearNotifications } = useContext(NotificationContext);
-  const BACKEND_URL = "192.168.131.193:8080";
+  const BACKEND_URL = "192.168.1.102131.193:8080";
 
   // useEffect(() => {
   //   const socket = io(BACKEND_URL);

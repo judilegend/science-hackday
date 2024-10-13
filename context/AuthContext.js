@@ -1,6 +1,5 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { authenticateUser, registerUser } from "../services/api";
 import axios from "axios";
 
 export const AuthContext = createContext();
@@ -31,7 +30,7 @@ export const AuthProvider = ({ children }) => {
         { username, password }, // Automatically converted to JSON
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
@@ -42,7 +41,7 @@ export const AuthProvider = ({ children }) => {
         console.log(res.data.token);
         await AsyncStorage.setItem("user", JSON.stringify(res.data.user));
       }
-      return res.data
+      return res.data;
     } catch (error) {
       throw error;
     }
@@ -55,7 +54,7 @@ export const AuthProvider = ({ children }) => {
         userData, // Automatically converted to JSON
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
@@ -64,7 +63,7 @@ export const AuthProvider = ({ children }) => {
         setUser(res.data.data);
         await AsyncStorage.setItem("user", JSON.stringify(res.data.data));
       }
-      return res.data
+      return res.data;
     } catch (error) {
       throw error;
     }
@@ -75,8 +74,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register , token }}>
+    <AuthContext.Provider value={{ user, login, logout, register, token }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };

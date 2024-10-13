@@ -7,7 +7,6 @@ import {
   Text,
   TouchableOpacity,
 } from "react-native";
-import io from "socket.io-client";
 import NetInfo from "@react-native-community/netinfo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { sendSMS } from "react-native-sms";

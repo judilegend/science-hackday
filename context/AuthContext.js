@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       const res = await axios.post(
-        "http://192.168.131.193:8080/api/user/authenticate",
+        "http://192.168.117.193:8080/api/user/authenticate",
         { username, password }, // Automatically converted to JSON
         {
           headers: {
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const res = await axios.post(
-        "http://192.168.131.193:8080/api/user/create",
+        "http://192.168.117.193:8080/api/user/create",
         userData, // Automatically converted to JSON
         {
           headers: {

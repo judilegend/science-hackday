@@ -1,11 +1,10 @@
 // screens/EmergencyScreen.js
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Platform, SafeAreaView, StyleSheet, Text, TouchableNativeFeedback, TouchableOpacity, View } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import * as Location from 'expo-location';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RippleButton = ({ onPress, style, children }) => {
     const [scale] = useState(new Animated.Value(1));
@@ -58,10 +57,46 @@ const RippleButton = ({ onPress, style, children }) => {
 export default function EmergencyScreen({ navigation }) {
     const { user, logout, token } = useContext(AuthContext);
     const [location, setLocation] = useState(null);
+    const ws = useRef(null);
 
-    useEffect(()=>{
+    useEffect(() => {
         getCurrentLocation();
-    },[])
+
+        // Initialize WebSocket connection
+        ws.current = new WebSocket('http://192.168.117.193:8080/ws/websocket');
+
+        ws.current.onopen = () => {
+            console.log('WebSocket connection established');
+
+            // Listen to messages sent to `/reply/{userId}`
+            const subscriptionMessage = JSON.stringify({
+                action: 'subscribe',
+                topic: `/reply/${user.id}`, // Subscribe to specific topic
+            });
+            ws.current.send(subscriptionMessage);
+            console.log(`Subscribed to /reply/${user.id}`);
+        };
+
+        ws.current.onmessage = (event) => {
+            console.log('Message received:', event.data);
+            setMessage(event.data); // Store the message in state
+        };
+
+        ws.current.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.current.onclose = (event) => {
+            console.log('WebSocket connection closed:', event.code, event.reason);
+        };
+
+        // Clean up the WebSocket connection on component unmount
+        return () => {
+            if (ws.current) {
+                ws.current.close();
+            }
+        };
+    }, []);
 
     const getCurrentLocation = async () => {
         let { status } = await Location.requestForegroundPermissionsAsync();
@@ -71,7 +106,6 @@ export default function EmergencyScreen({ navigation }) {
         }
 
         let location = await Location.getCurrentPositionAsync({});
-        console.log('Current location:', location);
         setLocation({ latitude: location.latitude, longitude: location.longitude });
         return location;
     };
@@ -81,27 +115,23 @@ export default function EmergencyScreen({ navigation }) {
         try {
             const formData = new FormData();
 
-            formData.append("signal",JSON.stringify({
+            formData.append("signal", JSON.stringify({
                 "typeId": 1,
                 "latitude": location.latitude,
                 "longitude": location.longitude,
                 "description": "Ceci est une urgence maximale",
-                "state" : "PENDING",
+                "state": "PENDING",
                 "userId": user.id
             }));
 
             formData.append("assets", []);
 
-            console.log(token);
-            
-
-            const res = await axios.post("http://192.168.131.193:8080/api/signal", formData, {
+            const res = await axios.post("http://192.168.117.193:8080/api/signal", formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': 'Bearer ' + token,
                 },
             });
-            console.log(res.data);
         } catch (error) {
             console.error(error);
         }

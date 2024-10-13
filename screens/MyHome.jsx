@@ -1,53 +1,59 @@
-import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  SafeAreaView,
-  Animated,
-  Platform,
-  StatusBar,
-  ScrollView,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
-import { useAuth } from "../hooks/useAuth";
-import NetInfo from "@react-native-community/netinfo";
-import { Linking } from "react-native";
+// screens/EmergencyScreen.js
+import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import axios from 'axios';
+import React, { useContext, useEffect, useState } from 'react';
+import { Alert, Animated, Platform, SafeAreaView, StyleSheet, Text, TouchableNativeFeedback, TouchableOpacity, View } from 'react-native';
+import { AuthContext } from '../context/AuthContext';
+import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RippleButton = ({ onPress, style, children }) => {
-  const [scale] = useState(new Animated.Value(1));
+    const [scale] = useState(new Animated.Value(1));
 
-  const animateScale = () => {
-    Animated.sequence([
-      Animated.timing(scale, {
-        toValue: 1.1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+    const animateScale = () => {
+        Animated.sequence([
+            Animated.timing(scale, {
+                toValue: 1.1,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+            Animated.timing(scale, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
 
-  return (
-    <TouchableOpacity
-      onPress={() => {
-        onPress();
-        animateScale();
-      }}
-    >
-      <Animated.View style={[style, { transform: [{ scale }] }]}>
-        {children}
-      </Animated.View>
-    </TouchableOpacity>
-  );
+    if (Platform.OS === 'android') {
+        return (
+            <TouchableNativeFeedback
+                onPress={() => {
+                    onPress();
+                    animateScale();
+                }}
+                background={TouchableNativeFeedback.Ripple('#7E57C2', true)}
+            >
+                <Animated.View style={[style, { transform: [{ scale }] }]}>
+                    {children}
+                </Animated.View>
+            </TouchableNativeFeedback>
+        );
+    }
+
+    return (
+        <TouchableOpacity
+            onPress={() => {
+                onPress();
+                animateScale();
+            }}
+        >
+            <Animated.View style={[style, { transform: [{ scale }] }]}>
+                {children}
+            </Animated.View>
+        </TouchableOpacity>
+    );
 };
-
 export default function MyHome({ navigation }) {
   const [isOffline, setIsOffline] = useState(false);
   const { logout } = useAuth();
@@ -160,105 +166,80 @@ export default function MyHome({ navigation }) {
             <View style={styles.offlineBar}>
               <Text style={styles.offlineText}>You are offline</Text>
             </View>
-          )}
-        </ScrollView>
-      </LinearGradient>
-    </SafeAreaView>
-  );
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  gradient: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  logoutButton: {
-    padding: 10,
-  },
-  emergencyCard: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 15,
-    padding: 20,
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  emergencyTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 20,
-  },
-  alarmButton: {
-    backgroundColor: "#f23846",
-    borderRadius: 50,
-    width: 100,
-    height: 100,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  emergencyText: {
-    fontSize: 16,
-    color: "#fff",
-  },
-  servicesContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 30,
-  },
-  serviceButton: {
-    width: "48%",
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  serviceText: {
-    color: "#fff",
-    marginTop: 10,
-  },
-  emergencySMSButton: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 10,
-    padding: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emergencySMSText: {
-    color: "white",
-    marginLeft: 10,
-    fontWeight: "bold",
-  },
-  offlineBar: {
-    backgroundColor: "#ff9800",
-    padding: 10,
-    alignItems: "center",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  offlineText: {
-    color: "#fff",
-  },
+    container: {
+        flex: 1,
+        justifyContent: 'space-between', // Ensures space is distributed
+    },
+    emergencyCard: {
+        backgroundColor: 'white',
+        padding: 20,
+        margin: 0,
+        alignItems: 'center',
+        flex: 1,
+    },
+    locationHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        marginBottom: 20,
+    },
+    locationText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    alarmButton: {
+        backgroundColor: '#f23846',
+        borderRadius: 50,
+        width: 100,
+        height: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 50,
+        overflow: 'hidden', // This is important for the Android ripple effect
+    },
+    emergencyText: {
+        fontSize: 16,
+        color: '#888',
+        marginBottom: 5,
+    },
+    drillText: {
+        fontSize: 14,
+        color: '#f23846',
+        marginBottom: 20,
+    },
+    servicesContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    serviceButton: {
+        alignItems: 'center',
+        width: '48%',
+        backgroundColor: '#FFF0F0',
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 10,
+    },
+    serviceText: {
+        marginTop: 5,
+        color: '#f23846',
+    },
+    bottomIconsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around', // Space out the icons evenly
+        paddingVertical: 10, // Add some padding to the bottom
+    },
+    profileIcon: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: '#f23846',
+    },
 });

@@ -43,11 +43,7 @@ export const reportEmergency = async (latitude, longitude) => {
   }
 };
 
-export const reportIssue = async (signalData, assets, token) => {
-  const formData = new FormData();
-  formData.append("signal", JSON.stringify(signalData));
-  formData.append("assets", assets);
-
+export const reportIssue = async (formData, token) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/signal`, formData, {
       headers: {
@@ -57,6 +53,7 @@ export const reportIssue = async (signalData, assets, token) => {
     });
     return response.data;
   } catch (error) {
+    console.error("API Error:", error.response?.data || error.message);
     throw new Error(error.response?.data?.message || "Failed to report issue");
   }
 };

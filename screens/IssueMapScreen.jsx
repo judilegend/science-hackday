@@ -278,21 +278,32 @@ const IssueMapScreen = ({ navigation }) => {
 
     try {
       const signalData = {
-        typeId: 1, // Adjust this based on your issue types
+        typeId: 1,
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
         description: issueDescription,
         state: "PENDING",
-        userId: user.id, // Make sure you have access to the user object
+        userId: user.id,
       };
-      let assetsPath = [];
+
       const formData = new FormData();
       formData.append("signal", JSON.stringify(signalData));
-      assetsPath = [...photos];
-      // console.log(assetsPath);
 
-      const response = await reportIssue(signalData, assetsPath , token); // Make sure you have access to the token
+      photos.forEach((photo, index) => {
+        const fileExtension = photo.split(".").pop();
+        const fileName = `photo_${index}.${fileExtension}`;
+        formData.append("assets", {
+          uri: photo,
+          type: `image/${fileExtension}`,
+          name: fileName,
+        });
+      });
+
+      console.log("Sending formData:", JSON.stringify(formData));
+
+      const response = await reportIssue(formData, token);
       console.log("Signal data sent:", response);
+
       setIsReportModalVisible(false);
       setIssueTitle("");
       setIssueDescription("");
@@ -302,7 +313,6 @@ const IssueMapScreen = ({ navigation }) => {
         "Votre signalement a été enregistré avec succès."
       );
 
-      // Add the new issue to the map
       const newIssue = {
         id: issues.length + 1,
         title: issueTitle,
@@ -315,7 +325,8 @@ const IssueMapScreen = ({ navigation }) => {
       console.error("Error submitting issue report:", error);
       Alert.alert(
         "Erreur",
-        "Une erreur est survenue lors de l'envoi du signalement."
+        "Une erreur est survenue lors de l'envoi du signalement. Détails: " +
+          error.message
       );
     }
   };

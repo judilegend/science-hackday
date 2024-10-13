@@ -14,6 +14,7 @@ import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import NetInfo from '@react-native-community/netinfo';
 
+
 const RippleButton = ({ onPress, style, children }) => {
   const [scale] = useState(new Animated.Value(1));
 
@@ -46,7 +47,6 @@ const RippleButton = ({ onPress, style, children }) => {
     </TouchableOpacity>
   );
 };
-
 export default function MyHome({ navigation }) {
   const [isOffline, setIsOffline] = useState(false);
   const { logout } = useAuth();
@@ -113,6 +113,7 @@ export default function MyHome({ navigation }) {
           {isOffline && (
             <View style={styles.offlineBar}>
               <Text style={styles.offlineText}>Vous êtes hors ligne</Text>
+
             </View>
           )}
         </ScrollView>

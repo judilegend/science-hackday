@@ -61,24 +61,7 @@ export default function MyHome({ navigation }) {
   }, []);
 
   const handleEmergencyPress = () => {
-    Alert.alert(
-      "Signaler une urgence",
-      "Êtes-vous sûr de vouloir signaler une urgence médicale ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Confirmer",
-          onPress: async () => {
-            const location = await getCurrentLocation();
-            navigation.navigate("IssueMap", {
-              initialLocation: location,
-              confirmEmergency: true,
-            });
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+    navigation.navigate("IssueMap");
   };
 
   const handleEmergencySMS = async () => {
@@ -132,7 +115,16 @@ export default function MyHome({ navigation }) {
               onPress={handleEmergencyPress}
               style={styles.alarmButton}
             >
-              <MaterialIcons name="alarm" size={48} color="white" />
+              <RippleButton
+                onPress={handleEmergencyPress}
+                style={styles.alarmButton}
+              >
+                <FontAwesome5
+                  name="exclamation-triangle"
+                  size={50}
+                  color="#fff"
+                />
+              </RippleButton>
             </RippleButton>
             <Text style={styles.emergencyText}>Tap in case of emergency</Text>
           </View>

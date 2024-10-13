@@ -4,14 +4,19 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
+  Alert,
+  Image, // Add this line
   Modal,
   TextInput,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker, Circle, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import { MAP_INITIAL_REGION } from "../utils/constants";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { getDistance } from "geolib";
+import * as ImagePicker from "expo-image-picker";
+import { reportIssue } from "../services/api";
 
 const MOCK_ISSUES = [
   {
@@ -31,8 +36,14 @@ const MOCK_ISSUES = [
 ];
 
 const HOSPITALS = [
-  { id: 1, name: "Hôpital Central", latitude: -18.8792, longitude: 47.5079 },
-  { id: 2, name: "Clinique St. Paul", latitude: -18.88, longitude: 47.51 },
+  {
+    id: 1,
+    name: "Hôpital Saint Joseph",
+    latitude: -18.9102,
+    longitude: 47.5235,
+  },
+  { id: 2, name: "CSB2 de Mahamasina", latitude: -18.9147, longitude: 47.5284 },
+  { id: 3, name: "Hôpital Central", latitude: -18.8792, longitude: 47.5079 },
 ];
 
 const IssueMapScreen = ({ navigation }) => {
@@ -44,23 +55,11 @@ const IssueMapScreen = ({ navigation }) => {
   const mapRef = useRef(null);
   const [nearestHospital, setNearestHospital] = useState(null);
   const [route, setRoute] = useState(null);
-  const { initialLocation, confirmEmergency } = route.params || {};
 
   useEffect(() => {
-    if (confirmEmergency && userLocation) {
-      handleEmergencyConfirmation();
-    }
+    getUserLocation();
   }, []);
 
-  const handleEmergencyConfirmation = async () => {
-    const nearest = findNearestHospital(userLocation);
-    const distance = await getRealisticRoute(userLocation, nearest);
-    const distanceInKm = (distance / 1000).toFixed(2);
-    Alert.alert(
-      "Urgence signalée",
-      `L'hôpital ${nearest.name} a été informé. Les secours sont en route. Distance estimée: ${distanceInKm} km.`
-    );
-  };
   const getUserLocation = async () => {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -213,13 +212,94 @@ const IssueMapScreen = ({ navigation }) => {
     setIsReportModalVisible(true);
   };
 
-  const submitIssueReport = () => {
+  const [photos, setPhotos] = useState([]);
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission refusée",
+        "Désolé, nous avons besoin des permissions pour accéder à votre galerie."
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setPhotos([...photos, result.assets[0].uri]);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission refusée",
+        "Désolé, nous avons besoin des permissions pour accéder à votre caméra."
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setPhotos([...photos, result.assets[0].uri]);
+    }
+  };
+
+  const removePhoto = (index) => {
+    const newPhotos = [...photos];
+    newPhotos.splice(index, 1);
+    setPhotos(newPhotos);
+  };
+  const [isEmergencyMode, setIsEmergencyMode] = useState(false);
+
+  const toggleEmergencyMode = () => {
+    setIsEmergencyMode(!isEmergencyMode);
+  };
+  const submitIssueReport = async () => {
     if (!issueTitle.trim() || !issueDescription.trim()) {
       Alert.alert("Champs incomplets", "Veuillez remplir tous les champs.");
       return;
     }
 
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      formData.append("title", issueTitle);
+      formData.append("description", issueDescription);
+      formData.append("latitude", userLocation.latitude.toString());
+      formData.append("longitude", userLocation.longitude.toString());
+
+      photos.forEach((photo, index) => {
+        formData.append("photos", {
+          uri: photo,
+          type: "image/jpeg",
+          name: `photo_${index}.jpg`,
+        });
+      });
+
+      const response = await reportIssue(formData);
+
+      setIsReportModalVisible(false);
+      setIssueTitle("");
+      setIssueDescription("");
+      setPhotos([]);
+      Alert.alert(
+        "Problème signalé",
+        "Votre signalement a été enregistré avec succès."
+      );
+
+      // Add the new issue to the map
       const newIssue = {
         id: issues.length + 1,
         title: issueTitle,
@@ -228,16 +308,14 @@ const IssueMapScreen = ({ navigation }) => {
         longitude: userLocation.longitude,
       };
       setIssues([...issues, newIssue]);
-      setIsReportModalVisible(false);
-      setIssueTitle("");
-      setIssueDescription("");
+    } catch (error) {
+      console.error("Error submitting issue report:", error);
       Alert.alert(
-        "Problème signalé",
-        "Votre signalement a été enregistré avec succès."
+        "Erreur",
+        "Une erreur est survenue lors de l'envoi du signalement."
       );
-    }, 1000);
+    }
   };
-
   return (
     <View style={styles.container}>
       <MapView
@@ -293,27 +371,36 @@ const IssueMapScreen = ({ navigation }) => {
           />
         )}
       </MapView>
-      <TouchableOpacity
-        style={styles.communicationButton}
-        onPress={() => navigation.navigate("Communication")}
-      >
-        <Text style={styles.buttonText}>Open Communication</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.emergencyButton}
-        onPress={handleEmergencyReport}
-      >
-        <Icon name="warning" size={32} color="#FFFFFF" />
-        <Text style={styles.emergencyButtonText}>URGENCE</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.reportButton} onPress={handleIssueReport}>
-        <Icon name="report-problem" size={24} color="#FFFFFF" />
-        <Text style={styles.reportButtonText}>Signaler un problème</Text>
-      </TouchableOpacity>
 
       <TouchableOpacity style={styles.locationButton} onPress={getUserLocation}>
         <Icon name="my-location" size={24} color="#007AFF" />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.emergencyButton}
+        onPress={handleIssueReport}
+      >
+        <Icon
+          name="report-problem"
+          size={24}
+          color={isEmergencyMode ? "#FFFFFF" : "#FF0000"}
+        />
+        <Text
+          style={[
+            styles.emergencyButtonText,
+            isEmergencyMode && styles.emergencyButtonTextActive,
+          ]}
+        >
+          Signaler un problème
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.nearestHospitalButton}
+        onPress={handleEmergencyReport}
+      >
+        <Ionicons size={24} color="#FFFFFF" />
+        <Text style={styles.nearestHospitalButtonText}>
+          Trouver l'hôpital le plus proche
+        </Text>
       </TouchableOpacity>
 
       <Modal
@@ -338,6 +425,22 @@ const IssueMapScreen = ({ navigation }) => {
               onChangeText={setIssueDescription}
               multiline
             />
+            <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
+              <Text style={styles.photoButtonText}>Prendre une photo</Text>
+            </TouchableOpacity>
+            <View style={styles.photoContainer}>
+              {photos.map((photo, index) => (
+                <View key={index} style={styles.photoWrapper}>
+                  <Image source={{ uri: photo }} style={styles.photo} />
+                  <TouchableOpacity
+                    style={styles.removePhotoButton}
+                    onPress={() => removePhoto(index)}
+                  >
+                    <Text style={styles.removePhotoButtonText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
             <TouchableOpacity
               style={styles.submitButton}
               onPress={submitIssueReport}
@@ -346,7 +449,10 @@ const IssueMapScreen = ({ navigation }) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => setIsReportModalVisible(false)}
+              onPress={() => {
+                setIsReportModalVisible(false);
+                setPhotos([]);
+              }}
             >
               <Text style={styles.cancelButtonText}>Annuler</Text>
             </TouchableOpacity>
@@ -394,6 +500,128 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 5,
   },
+
+  emergencyButton: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    elevation: 5,
+  },
+  emergencyButtonActive: {
+    backgroundColor: "#FF0000",
+  },
+  emergencyButtonText: {
+    color: "#FF0000",
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+  emergencyButtonTextActive: {
+    color: "#FFFFFF",
+  },
+  nearestHospitalButton: {
+    position: "absolute",
+    bottom: 40,
+    left: 20,
+    right: 20,
+    backgroundColor: "#4CAF50",
+    borderRadius: 25,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+  },
+  nearestHospitalButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  blurContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalContainer: {
+    backgroundColor: "#F2F2F7",
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 34,
+    maxHeight: "90%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  modalContent: {
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+    paddingHorizontal: 4,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1C1C1E",
+    letterSpacing: 0.35,
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(60, 60, 67, 0.1)",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 17,
+    color: "#1C1C1E",
+    fontWeight: "400",
+  },
+  textArea: {
+    height: 120,
+    textAlignVertical: "top",
+    paddingTop: 14,
+  },
+  photoSection: {
+    marginTop: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 12,
+    color: "#1C1C1E",
+    letterSpacing: 0.38,
+  },
   communicationButton: {
     position: "absolute",
     bottom: 20,
@@ -406,6 +634,46 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "bold",
     marginLeft: 10,
+  },
+  photoButton: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 5,
+    padding: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  photoButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  photoContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 10,
+  },
+  photoWrapper: {
+    position: "relative",
+    margin: 5,
+  },
+  photo: {
+    width: 100,
+    height: 100,
+    borderRadius: 5,
+  },
+  removePhotoButton: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "red",
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  removePhotoButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
   locationButton: {
     position: "absolute",
